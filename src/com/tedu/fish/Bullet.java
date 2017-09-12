@@ -14,16 +14,46 @@ public class Bullet extends Thread{
     private int height;
     private int X;
     private int Y;
-    private double rorate;
+    private double radian;
+    private int a,b;
+    private boolean isContinue = true;
 
-    public Bullet(){
+    Pool pool;
+
+    public Bullet(Pool pool){
         try {
             bulletImage = ImageIO.read(new File("./images/bullet1.png"));
             width = bulletImage.getWidth();
             height = bulletImage.getHeight();
+            this.pool = pool;
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public boolean isContinue() {
+        return isContinue;
+    }
+
+    public void setContinue(boolean aContinue) {
+        isContinue = aContinue;
+    }
+
+    public int getA() {
+        return a;
+    }
+
+    public int getB() {
+        return b;
+    }
+
+    public void setA(int a) {
+
+        this.a = a;
+    }
+
+    public void setB(int b) {
+        this.b = b;
     }
 
     public BufferedImage getBulletImage() {
@@ -54,19 +84,32 @@ public class Bullet extends Thread{
         Y = y;
     }
 
-    public double getRorate() {
-        return rorate;
+    public double getRadian() {
+        return radian;
     }
 
-    public void setRorate(double rorate) {
-        this.rorate = rorate;
+    public void setRadian(double radian) {
+        this.radian = radian;
     }
 
     @Override
     public void run() {
-        while (true){
+        while (isContinue()){
             try {
-                Y-=10;
+                setY( Y-10 );
+                int r = getB() - getY();
+                int xx = getA() + (int)(Math.sin(getRadian()) * r);
+                int yy = getB() - (int)(Math.cos(getRadian()) * r);
+                Fish[] fishes = pool.fishes;
+                for (int i = 0; i < fishes.length; i++){
+                    Fish fish = fishes[i];
+                    if (xx >= fish.getX() && xx <= fish.getX() + fish.getWidth()
+                            && yy >= fish.getY() && yy <= fish.getY() + fish.getHeight()){
+                        fish.setLive(false);
+                        pool.bullets.remove(this);
+                        setContinue(false);
+                    }
+                }
                 Thread.sleep(24);
             } catch (InterruptedException e) {
                 e.printStackTrace();

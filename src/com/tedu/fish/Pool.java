@@ -22,12 +22,12 @@ public class Pool extends JComponent{
     FishNet net ;
     Fish fish;
     int count = 0;
-    double mouseX;
-    double mouseY;
+    int mouseX,mouseY;
     double radian;
+    int rotateCenterX,rotateCenterY;
 
-    static final int DEFAULT_WIDTH = 800;
-    static final int DEFAULT_HEIGHT = 640;
+//    static final int DEFAULT_WIDTH = 800;
+//    static final int DEFAULT_HEIGHT = 640;
 
 
     public Pool(){
@@ -35,6 +35,8 @@ public class Pool extends JComponent{
             backgroundImg = ImageIO.read(new File("./images/bg.jpg"));
             bottomBar = ImageIO.read(new File("./images/bottom-bar.png"));
             barrel = new Barrel();
+            barrel.setX(bottomBar.getWidth()/2 + 25);
+            barrel.setY(backgroundImg.getHeight() - bottomBar.getHeight() + 10);
             fishes = new Fish[10];
             net = new FishNet();
             for (int i = 0; i < fishes.length; i++) {
@@ -76,21 +78,23 @@ public class Pool extends JComponent{
         if (net.isShow()) {
             g.drawImage(net.getShape(), net.getX(), net.getY(), net.getShape().getWidth(), net.getShape().getHeight(), null);
         }
-        // 绘画跟随鼠标旋转的大炮
+        // 绘画旋转的准备
         Graphics2D graphics2D = (Graphics2D) g.create();
-        double radianX = mouseX - ( bottomBar.getWidth() / 2 + 25 );
-        double radianY = mouseY - ( backgroundImg.getHeight() - bottomBar.getHeight() + 10 );
+        rotateCenterX = barrel.getX() + barrel.getWidth()/2;
+        rotateCenterY = barrel.getY() + barrel.getHeight()/2;
+        double radianX = mouseX - rotateCenterX;
+        double radianY = mouseY - rotateCenterY;
         radian = -Math.atan( radianX / radianY );
-        double rotateCenterX = bottomBar.getWidth()/2 + 25 + barrel.getWidth()/2;
-        double rotateCenterY = backgroundImg.getHeight() - bottomBar.getHeight() + 20 + barrel.getHeight()/2;
+        // 绘画旋转的大炮
         graphics2D.rotate(radian, rotateCenterX, rotateCenterY);
-        graphics2D.drawImage(barrel.getBarrel(),bottomBar.getWidth()/2 + 25,
-                backgroundImg.getHeight() - bottomBar.getHeight() + 10,
+        graphics2D.drawImage(barrel.getBarrel(),barrel.getX(), barrel.getY(),
                 barrel.getWidth(),barrel.getHeight(),null);
+        // 绘画旋转的子弹
         for (int i = 0; i < bullets.size(); i++){
             Bullet bullet = bullets.get(i);
-            Graphics2D graphics2D1 = (Graphics2D) g;
-            graphics2D1.rotate(bullet.getRorate(), rotateCenterX, rotateCenterY);
+            Graphics2D graphics2D1 = (Graphics2D) g.create();
+//            System.out.println(bullet.getRadian()+ "," + rotateCenterX + "," + rotateCenterY);
+            graphics2D1.rotate(bullet.getRadian(), rotateCenterX, rotateCenterY);
             graphics2D1.drawImage(bullet.getBulletImage(),bullet.getX(),bullet.getY(),bullet.getWidth(),bullet.getHeight(),null);
         }
 
@@ -112,6 +116,7 @@ public class Pool extends JComponent{
             }
         }
     }
+
     public void reflash(){
         MouseAdapter mouseAdapter = new MouseAdapter() {
             @Override //渔网显示
@@ -128,22 +133,24 @@ public class Pool extends JComponent{
             public void mouseMoved(MouseEvent e) {
                 mouseX = e.getX();
                 mouseY = e.getY();
-                net.moveTo(e.getX(), e.getY());
+                net.moveTo(mouseX, mouseY);
             }
 
-            @Override //渔网捕鱼
+            @Override //渔网捕鱼  子弹捕鱼
             public void mousePressed(MouseEvent e) {
 //                catchFish();
-                Bullet bullet = new Bullet();
-                bullet.setX(bottomBar.getWidth()/2 + 25);
-                bullet.setY(backgroundImg.getHeight() - bottomBar.getHeight() + 10);
-
-                bullet.setRorate(radian);
+                Bullet bullet = new Bullet(Pool.this);
+                bullet.setX(rotateCenterX - bullet.getWidth()/2);
+                bullet.setY(rotateCenterY - bullet.getHeight()/2);
+                bullet.setRadian(radian);
+                System.out.println(bullet.getX() +","+bullet.getY() +","+bullet.getRadian());
+                bullet.setA(bullet.getX());
+                bullet.setB(bullet.getY());
                 bullets.add(bullet);
                 bullet.start();
             }
         };
-
+        // 配套mouseAdapter使用
         this.addMouseListener(mouseAdapter);
         this.addMouseMotionListener(mouseAdapter);
 
